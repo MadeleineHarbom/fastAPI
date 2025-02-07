@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-
+import debugpy
 from pydantic import BaseModel
 
 items = {}
@@ -15,6 +15,12 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+debugpy.listen(("0.0.0.0", 5678))
+print("Waiting for debugger to attach...")
+debugpy.wait_for_client()
+print("Debugged attached")
+
 
 class GreetRequest(BaseModel):
     name: str
@@ -31,3 +37,8 @@ async def greet(country_code):
 @app.post("/greet")
 async def greet(request: GreetRequest):
     return {"data": f"Hello, {request.name}"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="debug")
