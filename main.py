@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import debugpy
 from pydantic import BaseModel
+import uvicorn
 
 items = {}
 local_greetings = {"en": "Good Day", "dk":"Hejsa", "se":"Tja", "no": "Hei", "fi":"Moikka"}
@@ -10,16 +11,11 @@ local_greetings = {"en": "Good Day", "dk":"Hejsa", "se":"Tja", "no": "Hei", "fi"
 async def lifespan(app: FastAPI):
     print('Start up')
     items["greeting"] = "Hello"
-    yield
+    yield {"stuff": "Heya"}
     print('Shut down')
 
 
-app = FastAPI(lifespan=lifespan)
-
-debugpy.listen(("0.0.0.0", 5678))
-print("Waiting for debugger to attach...")
-debugpy.wait_for_client()
-print("Debugged attached")
+app = FastAPI(lifespan=lifespan, debug=True)
 
 
 class GreetRequest(BaseModel):
@@ -52,5 +48,9 @@ async def greet(country_code: str=None, name: str=None):
 
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, log_level="debug")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, log_level="debug")
+
+    debugpy.listen(("0.0.0.0", 5678))
+    print("Waiting for debugger to attach...")
+    debugpy.wait_for_client()
+    print("Debugged attached")
